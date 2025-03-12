@@ -4,13 +4,15 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "ts-node": "^10.9.2"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
     "@types/dotenv": "^8.2.3",
+    "bcryptjs": "^3.0.2",
     "mongoose": "^8.12.1"
   }
 }
