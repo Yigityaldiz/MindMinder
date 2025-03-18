@@ -5,7 +5,6 @@ export interface ILearningProfile {
   learningStyle: string;
   preferences: string[];
   surveyResults: any;
-  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 export interface IUser extends Document {
@@ -13,6 +12,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   learningProfile: ILearningProfile;
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 const LearningProfileShema: Schema = new Schema({
@@ -25,7 +25,9 @@ const UserSchema: Schema = new Schema({
   name: { type: String, require: true },
   email: { type: String, require: true, unique: true },
   password: { type: String, require: true },
-  learningProfile: { type: LearningProfileShema, require: true },
+  learningProfile: { type: LearningProfileShema, default: {} },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 });
 
 UserSchema.pre<IUser>("save", async function (next) {
