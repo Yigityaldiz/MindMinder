@@ -14,8 +14,8 @@
   "dependencies": {
     "@types/dotenv": "^8.2.3",
     "bcryptjs": "^3.0.2",
-    "djwt": "^2.0.0",
     "express": "^4.21.2",
+    "jose": "^6.0.10",
     "mongoose": "^8.12.1"
   }
 }
