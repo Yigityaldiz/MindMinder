@@ -5,6 +5,9 @@ import signupRouter from "./api/auth/signup";
 import signinRouter from "./api/auth/signin";
 import contentRouter from "./api/content";
 import chatSessionRouter from "./api/chatSession";
+import recommendationsRouter from "./api/recommendations";
+
+import adminRouter from "./api/admin";
 
 dotenv.config();
 
@@ -18,6 +21,9 @@ app.use("/api/auth/signup", signupRouter);
 app.use("/api/auth/signin", signinRouter);
 app.use("/api/content", contentRouter);
 app.use("/api/chatSession", chatSessionRouter);
+app.use("/api/recommendations", recommendationsRouter);
+app.use("/api/admin", adminRouter);
+
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello word" });
 });

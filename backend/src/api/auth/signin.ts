@@ -25,7 +25,7 @@ router.post("/", async (req: Request, res: Response): Promise<Response> => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // JWT token oluşturma: jose kullanarak
+    const role = email === process.env.ADMIN_EMAIL ? "admin" : "user"; // JWT token oluşturma: jose kullanarak
     const secret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
     const token = await new SignJWT({
@@ -41,6 +41,7 @@ router.post("/", async (req: Request, res: Response): Promise<Response> => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      role,
     };
 
     return res.status(200).json({ token, user: userData });
