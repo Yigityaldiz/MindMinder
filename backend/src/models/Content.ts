@@ -10,6 +10,7 @@ export interface IContent extends Document {
   tags: string[];
   publishedAt: Date;
   learningStyle: "visual" | "auditory" | "kinesthetic" | string;
+  user: mongoose.Types.ObjectId;
 }
 
 const ContentSchema: Schema = new Schema({
@@ -21,6 +22,7 @@ const ContentSchema: Schema = new Schema({
   tags: [{ type: String }],
   publishedAt: { type: Date, default: Date.now },
   learningStyle: { type: String, required: true },
+  user: { type: Schema.Types.ObjectId, ref: "User", require: true },
 });
 
 export default mongoose.model<IContent>("Content", ContentSchema);
