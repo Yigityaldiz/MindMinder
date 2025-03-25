@@ -5,6 +5,12 @@ export interface ILearningProfile {
   learningStyle: string;
   preferences: string[];
   surveyResults: any;
+  quizResults?: Array<{
+    quizId: string;
+    score: number;
+    takenAt: Date;
+  }>;
+  notes: mongoose.Types.ObjectId[];
 }
 
 export interface IUser extends Document {
@@ -20,6 +26,14 @@ const LearningProfileShema: Schema = new Schema({
   learningStyle: { type: String, require: true },
   preferences: { type: [String], default: [] },
   surveyResults: { type: Schema.Types.Mixed },
+  quizResult: [
+    {
+      quizId: { type: String, required: true },
+      score: { type: Number, required: true },
+      takenAt: { type: Date, required: true },
+    },
+  ],
+  notes: [{ type: Schema.Types.ObjectId, ref: "Note" }],
 });
 
 const UserSchema: Schema = new Schema({
