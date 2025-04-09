@@ -6,6 +6,14 @@ export interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+
 export async function authenticateToken(
   req: AuthenticatedRequest,
   res: Response,

@@ -14,7 +14,7 @@ export interface IContent extends Document {
 }
 
 const ContentSchema: Schema = new Schema({
-  title: { type: String, require: true },
+  title: { type: String, required: true },
   description: { type: String },
   contentType: { type: String, required: true, enum: ["document", "audio"] },
   fileUrl: { type: String, required: true },

@@ -26,7 +26,7 @@ const LearningProfileShema: Schema = new Schema({
   learningStyle: { type: String, require: true },
   preferences: { type: [String], default: [] },
   surveyResults: { type: Schema.Types.Mixed },
-  quizResult: [
+  quizResults: [
     {
       quizId: { type: String, required: true },
       score: { type: Number, required: true },
