@@ -15,6 +15,7 @@
     "@types/dotenv": "^8.2.3",
     "bcryptjs": "^3.0.2",
     "express": "^4.21.2",
+    "gpt-tokenizer": "^2.9.0",
     "jose": "^6.0.10",
     "mongoose": "^8.12.1",
     "xss": "^1.0.15"
