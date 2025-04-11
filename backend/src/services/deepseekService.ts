@@ -58,7 +58,7 @@ class DeepSeekService {
       const response = await axios.post(
         CHAT_API_URL,
         {
-          model: "deepseek-chat",
+          model: "deepseek-reasoner",
           messages: [
             {
               role: "system",
@@ -66,6 +66,7 @@ class DeepSeekService {
             },
             { role: "user", content: prompt },
           ],
+
           temperature: options.temperature ?? 0.7,
           max_tokens: options.max_tokens ?? 2000,
         },
