@@ -67,7 +67,7 @@ class DeepSeekService {
             { role: "user", content: prompt },
           ],
           temperature: options.temperature ?? 0.7,
-          max_tokens: options.max_tokens ?? 1000,
+          max_tokens: options.max_tokens ?? 2000,
         },
         {
           headers: {
