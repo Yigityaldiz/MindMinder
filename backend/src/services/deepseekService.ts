@@ -1,48 +1,17 @@
-// // src/services/deepseekService.ts
-// import axios from "axios";
-
-// class DeepSeekService {
-//   private chatApiKey: string;
-//   private chatApiUrl: string;
-
-//   constructor() {
-//     this.chatApiKey = process.env.DEEPSEEK_API_KEY!;
-//     this.chatApiUrl = process.env.DEEPSEEK_CHAT_API_URL!;
-//   }
-
-//   // Yeni metod: Sohbet yanıtı üret
-//   async generateResponse(userMessage: string): Promise<string> {
-//     const response = await axios.post(
-//       this.chatApiUrl,
-//       {
-//         messages: [
-//           {
-//             role: "user",
-//             content: userMessage,
-//           },
-//         ],
-//         model: "deepseek-chat", // Model adını API dokümantasyonuna göre güncelleyin
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${this.chatApiKey}`,
-//           "Content-Type": "application/json",
-//         },
-//       }
-//     );
-
-//     return response.data.choices[0].message.content;
-//   }
-// }
-
-// export default new DeepSeekService();
-// src/services/deepseekService.ts
 import axios from "axios";
 import { logError } from "../utils/logger";
 
 // API Konfigürasyonları
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY!;
 const CHAT_API_URL = "https://api.deepseek.com/v1/chat/completions";
+
+interface StreamChunk {
+  choices: Array<{
+    delta: {
+      content?: string;
+    };
+  }>;
+}
 
 class DeepSeekService {
   // Chat API için optimize edilmiş çağrı
@@ -84,6 +53,81 @@ class DeepSeekService {
       this.handleApiError(error);
       throw new Error("Sohbet yanıtı alınamadı");
     }
+  }
+
+  async streamedChatCompletion(
+    prompt: string,
+    options: {
+      temperature?: number;
+      systemMessage?: string;
+      onProgress?: (chunk: string) => void;
+    } = {}
+  ): Promise<string> {
+    try {
+      const response = await axios.post(
+        CHAT_API_URL,
+        {
+          model: "deepseek-reasoner",
+          messages: [
+            {
+              role: "system",
+              content: options.systemMessage || "You are a helpful assistant.",
+            },
+            { role: "user", content: prompt },
+          ],
+          temperature: options.temperature ?? 0.7,
+          stream: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "stream",
+          timeout: 30000,
+        }
+      );
+
+      return new Promise<string>((resolve, reject) => {
+        let fullResponse = "";
+        const stream = response.data;
+
+        stream.on("data", (chunk: Buffer) => {
+          try {
+            const lines = chunk
+              .toString()
+              .split("\n")
+              .filter((line) => line.trim());
+
+            for (const line of lines) {
+              const message = line.replace(/^data: /, "");
+              if (message === "[DONE]") return;
+
+              const parsed: StreamChunk = JSON.parse(message);
+              const content = parsed.choices[0]?.delta?.content || "";
+
+              fullResponse += content;
+              options.onProgress?.(content);
+            }
+          } catch (error) {
+            reject(new Error("Stream parsing error"));
+          }
+        });
+
+        stream.on("end", () => resolve(fullResponse));
+        stream.on("error", (error: Error) => {
+          this.handleStreamError(error, reject);
+        });
+      });
+    } catch (error: any) {
+      this.handleApiError(error);
+      throw error;
+    }
+  }
+
+  private handleStreamError(error: Error, reject: (reason: any) => void) {
+    logError("Stream error:", error);
+    reject(new Error("Stream kesildi"));
   }
 
   // Merkezi hata yönetimi

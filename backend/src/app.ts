@@ -7,6 +7,7 @@ import contentRouter from "./api/content";
 import chatSessionRouter from "./api/chatSession";
 import recommendationsRouter from "./api/recommendations";
 import chatRouter from "./api/chat";
+import streamRouter from "./api/chatStream";
 
 import adminRouter from "./api/admin";
 
@@ -26,6 +27,7 @@ app.use("/api/recommendations", recommendationsRouter);
 // app.use("/api/analyze", analyzeRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/chatStream", streamRouter);
 
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello word" });
