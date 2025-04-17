@@ -31,7 +31,7 @@ class DeepSeekService {
           messages: [
             {
               role: "system",
-              content: options.systemMessage || "You are a helpful assistant.",
+              content: options.systemMessage ?? "Sen yardımcı bir asistansın.",
             },
             { role: "user", content: prompt },
           ],
@@ -71,7 +71,9 @@ class DeepSeekService {
           messages: [
             {
               role: "system",
-              content: options.systemMessage || "You are a helpful assistant.",
+              content:
+                options.systemMessage ||
+                "You are a helpful assistant that provides information and answers questions.I must be able to ask you anything.",
             },
             { role: "user", content: prompt },
           ],

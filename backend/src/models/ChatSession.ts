@@ -11,7 +11,9 @@ export interface IChatSession extends Document {
   userId: mongoose.Types.ObjectId;
   topic: string;
   conversation: IConversation[];
+  isActive: boolean;
   startedAt: Date;
+  updatedAt: Date;
   endedAt?: Date;
 }
 
@@ -26,7 +28,14 @@ const ChatSessionSchema: Schema = new Schema({
   topic: { type: String, required: true },
   conversation: [{ type: ConversationSchema, default: [] }],
   startedAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  isActive: { type: Boolean, default: true },
   endedAt: { type: Date },
+});
+
+ChatSessionSchema.pre<IChatSession>("save", function (next) {
+  this.updatedAt = new Date();
+  next();
 });
 
 export default mongoose.model<IChatSession>("ChatSession", ChatSessionSchema);
