@@ -27,7 +27,7 @@ class DeepSeekService {
       const response = await axios.post(
         CHAT_API_URL,
         {
-          model: "deepseek-reasoner",
+          model: "deepseek-chat",
           messages: [
             {
               role: "system",
@@ -44,7 +44,7 @@ class DeepSeekService {
             Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
             "Content-Type": "application/json",
           },
-          timeout: 15000, // 15 saniye timeout
+          timeout: 0, // 15 saniye timeout
         }
       );
 

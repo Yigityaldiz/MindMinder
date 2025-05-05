@@ -33,7 +33,7 @@ router.post("/", async (req: Request, res: Response): Promise<Response> => {
       email: user.email,
     })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime("1h")
+      .setExpirationTime("15h")
       .sign(secret);
 
     // Kullanıcı verilerini hazırlama (şifre gibi hassas bilgileri dışarıya göndermiyoruz)

@@ -1,4 +1,3 @@
-import { timeStamp } from "console";
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IConversation {
@@ -25,7 +24,7 @@ const ConversationSchema: Schema = new Schema({
 
 const ChatSessionSchema: Schema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  topic: { type: String, required: true },
+  topic: { type: String, required: false },
   conversation: [{ type: ConversationSchema, default: [] }],
   startedAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

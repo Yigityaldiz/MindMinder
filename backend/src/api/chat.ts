@@ -4,6 +4,7 @@ import deepseekChat from "../services/deepseekService";
 import { authenticateToken } from "../middleware/authenticateToken";
 import cleanTextInput from "../middleware/cleanTextInput";
 import ChatSession from "../models/ChatSession";
+import { generateSessionTitle } from "../utils/sessionTitleGenerator";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.post(
       if (!session) {
         session = new ChatSession({
           userId,
-          topic: await generateSessionTitle(optimizedText),
+          topic: await generateSessionTitle(optimazeMessage),
           conversation: [],
           isActive: true,
         });
