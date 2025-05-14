@@ -8,6 +8,8 @@ import chatSessionRouter from "./api/chatSession";
 import recommendationsRouter from "./api/recommendations";
 import chatRouter from "./api/chat";
 import streamRouter from "./api/chatStream";
+import resetPasswordRouter from "./api/auth/resetPassword";
+import requestPasswordRouter from "./api/auth/requestPasswordReset";
 
 import adminRouter from "./api/admin";
 
@@ -28,6 +30,8 @@ app.use("/api/recommendations", recommendationsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/chatStream", streamRouter);
+app.use("/api/auth/resetPassword", resetPasswordRouter);
+app.use("/api/auth/requestPassword", requestPasswordRouter);
 
 app.get("/api/hello", (req, res) => {
   res.json({ message: "hello word" });

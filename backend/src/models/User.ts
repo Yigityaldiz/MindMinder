@@ -20,6 +20,8 @@ export interface IUser extends Document {
   password: string;
   learningProfile: ILearningProfile;
   comparePassword(candidatePassword: string): Promise<boolean>;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
 }
 
 const LearningProfileShema: Schema = new Schema({
