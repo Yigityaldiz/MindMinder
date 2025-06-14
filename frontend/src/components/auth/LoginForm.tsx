@@ -1,5 +1,5 @@
 import React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -14,10 +14,10 @@ import { ApiErrorResponse } from "../../types/api.types";
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { login, setLoading, setError: setAuthError, user } = useAuthStore();
+  const { login, setLoading, setError: setAuthError } = useAuthStore();
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
@@ -38,7 +38,6 @@ const LoginForm: React.FC = () => {
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
-      setLoading(false);
       const errorMessage =
         (error.response?.data as ApiErrorResponse)?.message ||
         "Giriş sırasında bir hata oluştu.";
@@ -51,39 +50,44 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="w-full max-w-md p-8 space-y-6 bg-neutral-800 rounded-lg shadow-xl">
-      {" "}
-      {/* Örnek: Formu saran bir container */}
       <h1 className="text-3xl font-bold text-center text-white mb-6">
         Giriş Yap
       </h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <FormInput
-          id="email"
-          label="E-posta Adresi"
-          type="email"
-          placeholder="ornek@eposta.com"
-          {...register("email")}
-          // propValue={watch('email')} // Floating label için anlık değer gerekiyorsa
-          errorMessage={errors.email?.message}
-          autoFocus
-          required // FormInput bileşeniniz bu prop'u etikette * göstermek için kullanıyorsa
+        <Controller
+          name="email"
+          control={control}
+          render={({ field }) => (
+            <FormInput
+              {...field}
+              id="email"
+              label="E-posta Adresi"
+              type="email"
+              placeholder=""
+              errorMessage={errors.email?.message}
+              autoFocus
+              required
+            />
+          )}
         />
 
-        <FormInput
-          id="password"
-          label="Şifre"
-          type="password"
-          placeholder="••••••••"
-          {...register("password")}
-          // propValue={watch('password')}
-          errorMessage={errors.password?.message}
-          required
+        <Controller
+          name="password"
+          control={control}
+          render={({ field }) => (
+            <FormInput
+              {...field}
+              id="password"
+              label="Şifre"
+              type="password"
+              placeholder=""
+              errorMessage={errors.password?.message}
+              required
+            />
+          )}
         />
 
         <div className="flex justify-end text-sm">
-          {/* TextLink bileşeniniz varsa:
-          <TextLink href="/forgot-password">Şifremi Unuttum?</TextLink>
-          Yoksa react-router-dom Link kullanabilirsiniz: */}
           <Link
             to="/forgot-password"
             className="font-medium text-blue-500 hover:text-blue-400"
@@ -103,12 +107,7 @@ const LoginForm: React.FC = () => {
         </Button>
 
         <div className="text-sm text-center text-neutral-400">
-          {" "}
-          {/* text-gray-400 yerine paletinizden bir renk */}
           Hesabın yok mu?{" "}
-          {/* TextLink bileşeniniz varsa:
-          <TextLink href="/signup">Kayıt Ol</TextLink>
-          Yoksa react-router-dom Link kullanabilirsiniz: */}
           <Link
             to="/signup"
             className="font-medium text-blue-500 hover:text-blue-400"
