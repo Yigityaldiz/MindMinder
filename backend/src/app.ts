@@ -10,6 +10,7 @@ import chatRouter from "./api/chat";
 import streamRouter from "./api/chatStream";
 import resetPasswordRouter from "./api/auth/resetPassword";
 import requestPasswordRouter from "./api/auth/requestPasswordReset";
+import cors from "cors";
 
 import adminRouter from "./api/admin";
 
@@ -18,6 +19,17 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const corsOptions = {
+  origin: "http://localhost:5173", // Frontend'inin adresi
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS", // İzin verilen metodlar
+  allowedHeaders: "Content-Type,Authorization", // İzin verilen başlıklar
+  credentials: true, // Eğer cookie veya authorization header'ları gibi bilgiler gönderiyorsan
+  optionsSuccessStatus: 200, // Bazı eski tarayıcılar için OPTIONS isteğine 204 yerine 200 döner
+};
+
+// CORS middleware'ini seçeneklerle birlikte kullan
+// TÜM ROUTE'LARDAN ÖNCE GELMELİ!
+app.use(cors(corsOptions));
 
 app.use(express.json());
 

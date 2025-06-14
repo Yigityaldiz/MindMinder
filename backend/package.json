@@ -5,6 +5,7 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
+    "@types/cors": "^2.8.18",
     "@types/express": "^4.17.15",
     "@types/nodemailer": "^6.4.17",
     "ts-node": "^10.9.2"
@@ -15,6 +16,7 @@
   "dependencies": {
     "@types/dotenv": "^8.2.3",
     "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
     "express": "^4.21.2",
     "gpt-tokenizer": "^2.9.0",
     "he": "^1.2.0",
