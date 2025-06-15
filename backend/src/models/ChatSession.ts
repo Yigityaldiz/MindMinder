@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IConversation {
+  _id?: mongoose.Types.ObjectId;
   question: string;
   answer: string;
   timestamp: Date;

@@ -192,4 +192,63 @@ router.patch(
   }
 );
 
+// BU KODU backend/src/api/chatSession.ts DOSYANIZA EKLEYİN
+
+// ... mevcut diğer rotalarınızın (router.get, router.post, router.patch) altına ...
+
+// 5. Belirli bir oturumu ID ile getirme (Read One) - EKSİK OLAN BU
+router.get(
+  "/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+      const userId = req.user?.id;
+      const session = await ChatSession.findOne({ _id: req.params.id, userId });
+      if (!session) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Session not found" });
+      }
+      return res.status(200).json({ success: true, data: session });
+    } catch (error) {
+      logInfo("Tekil oturum getirme hatası", {
+        error,
+        sessionId: req.params.id,
+        userId: req.user?.id,
+      });
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+);
+
+// 6. Oturumu Silme (Delete) - EKSİK OLAN BU
+router.delete(
+  "/:id",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res: Response): Promise<Response> => {
+    try {
+      const userId = req.user?.id;
+      const deletedSession = await ChatSession.findOneAndDelete({
+        _id: req.params.id,
+        userId,
+      });
+      if (!deletedSession) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Session not found" });
+      }
+      return res
+        .status(200)
+        .json({ success: true, message: "Session deleted successfully" });
+    } catch (error) {
+      logInfo("Oturum silme hatası", {
+        error,
+        sessionId: req.params.id,
+        userId: req.user?.id,
+      });
+      return res.status(500).json({ success: false, message: "Server error" });
+    }
+  }
+);
+
 export default router;
