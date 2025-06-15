@@ -1,4 +1,4 @@
-// src/api/chatStream.ts (RAG - INDEXING ENTEGRE EDİLDİ)
+// src/api/chatStream.ts (FAZ 2 - RAG RETRIEVAL ENTEGRE EDİLDİ)
 
 import { Router, type Request, type Response } from "express";
 import { authenticateToken } from "../middleware/authenticateToken";
@@ -6,16 +6,12 @@ import cleanTextInput from "../middleware/cleanTextInput";
 import ChatSession from "../models/ChatSession";
 import { generateSessionTitle } from "../utils/sessionTitleGenerator";
 import deepseekService from "../services/deepseekService";
-
-// Adım 1: Yeni servislerimizi import ediyoruz.
 import EmbeddingService from "../services/embeddingService";
 import QdrantService from "../services/qdrantService";
 
-const router = Router();
-
+// MongoDB ID'sini UUID'ye çeviren yardımcı fonksiyonumuz
 function mongoIdToUUID(id: string): string {
   const paddedId = id.padEnd(32, "0");
-  // UUID formatına uygun şekilde tireleri ekliyoruz (8-4-4-4-12).
   return `${paddedId.substring(0, 8)}-${paddedId.substring(
     8,
     12
@@ -25,45 +21,84 @@ function mongoIdToUUID(id: string): string {
   )}-${paddedId.substring(20, 32)}`;
 }
 
+const router = Router();
+
 router.post(
   "/",
   authenticateToken,
   cleanTextInput,
   async (req: Request, res: Response) => {
-    const optimizedMessage = req.body.optimizedText;
-    const userId = req.user.id;
-
-    // ... (Oturum bulma veya yaratma mantığı aynı kalıyor) ...
-    let session = await ChatSession.findOne({ userId, isActive: true });
-    if (!session) {
-      const autoTitle = await generateSessionTitle(optimizedMessage);
-      session = new ChatSession({
-        userId,
-        topic: autoTitle || "Yeni Sohbet",
-        conversation: [],
-        isActive: true,
-      });
-      await session.save();
-    }
-
-    let fullAnswer = "";
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
-
     try {
-      // --- DEEPSEEK STREAM BAŞLANGICI (Bu kısım aynı) ---
-      await deepseekService.streamedChatCompletion(optimizedMessage, {
+      const optimizedMessage = req.body.optimizedText;
+      const userId = req.user.id;
+
+      // ==========================================================
+      // ADIM 2.1: HAFIZADAN BİLGİ ÇEKME (RETRIEVAL)
+      // ==========================================================
+      console.log("RAG Retrieval başlıyor...");
+      const qdrant = await QdrantService.getInstance();
+      const embedder = await EmbeddingService.getInstance();
+
+      // 1. Gelen yeni soruyu vektöre çevir.
+      const queryVector = await embedder.generateEmbedding(optimizedMessage);
+
+      // 2. Bu vektörü kullanarak Qdrant'ta anlamsal arama yap.
+      const searchResults = await qdrant.search(queryVector);
+
+      // 3. Arama sonuçlarını (geçmiş konuşmaları) okunabilir bir metne dönüştür.
+      const contextText = searchResults
+        .map((result) => result.payload?.text)
+        .filter(Boolean) // Boş veya undefined metinleri filtrele
+        .join("\n\n---\n\n");
+
+      console.log("Bulunan Alakalı Geçmiş Konuşmalar:", contextText);
+
+      // ==========================================================
+      // ADIM 2.2: PROMPT'U ZENGİNLEŞTİRME (AUGMENTATION)
+      // ==========================================================
+      const augmentedPrompt = `
+        Sen, geçmiş konuşmaları hatırlayarak cevap veren yardımsever bir asistansın.
+        Aşağıda, kullanıcının sorusuyla en alakalı geçmiş konuşma parçaları verilmiştir.
+        Bu bilgileri kullanarak kullanıcının YENİ SORUSUNA tutarlı bir cevap ver.
+        Eğer geçmiş konuşmalar sorusuyla alakalı değilse, onları dikkate alma.
+
+        [GEÇMİŞ KONUŞMALAR]
+        ${contextText}
+
+        [YENİ SORU]
+        ${optimizedMessage}
+      `;
+
+      // Oturum bulma veya yaratma mantığı...
+      let session = await ChatSession.findOne({ userId, isActive: true });
+      if (!session) {
+        const autoTitle = await generateSessionTitle(optimizedMessage);
+        session = new ChatSession({
+          userId,
+          topic: autoTitle || "Yeni Sohbet",
+          conversation: [],
+          isActive: true,
+        });
+        await session.save();
+      }
+
+      let fullAnswer = "";
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
+
+      // ADIM 2.3: ZENGİNLEŞTİRİLMİŞ PROMPT'U YAPAY ZEKAYA GÖNDER
+      await deepseekService.streamedChatCompletion(augmentedPrompt, {
+        // <-- Değişiklik burada
         systemMessage: "Yardımcı bir asistansın.",
         onProgress: (chunk) => {
           res.write(`data: ${JSON.stringify({ content: chunk })}\n\n`);
           fullAnswer += chunk;
         },
       });
-      // --- DEEPSEEK STREAM BİTİŞİ ---
 
-      // MongoDB'ye kaydetme (Bu kısım da aynı)
+      // ... (Geri kalan kod aynı: MongoDB ve Qdrant'a KAYDETME) ...
       session.conversation.push({
         question: optimizedMessage,
         answer: fullAnswer,
@@ -71,66 +106,28 @@ router.post(
       });
       await session.save();
 
-      // =================================================================
-      // Adım 2: YENİ EKLENEN RAG INDEXING MANTIĞI
-      // =================================================================
-      try {
-        console.log("RAG Indexing başlıyor...");
-
-        // Servislerimizin başlatılmış örneklerini alıyoruz.
-        const qdrant = await QdrantService.getInstance();
-        const embedder = await EmbeddingService.getInstance();
-
-        // Vektöre dönüştüreceğimiz metni hazırlıyoruz.
+      const lastConversation =
+        session.conversation[session.conversation.length - 1];
+      if (lastConversation?._id) {
+        const pointId = mongoIdToUUID(lastConversation._id.toString());
         const textToEmbed = `Soru: ${optimizedMessage}\nCevap: ${fullAnswer}`;
-
-        // Metni vektöre çeviriyoruz.
         const vector = await embedder.generateEmbedding(textToEmbed);
-
-        const lastConversation =
-          session.conversation[session.conversation.length - 1];
-
-        // Qdrant'a kaydedilecek noktanın ID'sini ve payload'ını hazırlıyoruz.
-        if (lastConversation && lastConversation._id) {
-          const pointId = mongoIdToUUID(lastConversation._id.toString());
-
-          const payload = {
-            userId: userId.toString(),
-            sessionId: session.id.toString(),
-            text: textToEmbed,
-            timestamp: new Date().toISOString(),
-          };
-
-          await qdrant.upsertPoint(pointId, vector, payload);
-          console.log(
-            `Sohbet parçası başarıyla Qdrant'a indexlendi. ID: ${pointId}`
-          );
-        } else {
-          // Bu durumun normalde olmaması gerekir ama bir sorun olursa loglayalım.
-          console.error(
-            "RAG Indexing: Son sohbet parçası veya ID'si bulunamadı. Kayıt atlandı."
-          );
-        }
-        // ==========================================================
-        // GÜVENLİ ERİŞİM BLOĞUNUN SONU
-        // ==========================================================
-      } catch (ragError) {
-        console.error("RAG Indexing sırasında hata oluştu:", ragError);
+        const payload = {
+          userId: userId.toString(),
+          sessionId: session.id.toString(),
+          text: textToEmbed,
+          timestamp: new Date().toISOString(),
+        };
+        await qdrant.upsertPoint(pointId, vector, payload);
+        console.log(
+          `Sohbet parçası başarıyla Qdrant'a indexlendi. UUID: ${pointId}`
+        );
       }
-      // =================================================================
-      // YENİ MANTIĞIN SONU
-      // =================================================================
 
-      // Stream'i sonlandırıyoruz.
       res.end();
     } catch (error) {
-      console.error("Stream error:", error);
-      res.write(
-        `event: error\ndata: ${JSON.stringify({
-          error: "Stream sırasında bir hata oluştu.",
-        })}\n\n`
-      );
-      res.end();
+      console.error("Ana sohbet akışı hatası:", error);
+      res.status(500).end("Sunucu hatası."); // Hata durumunda stream'i düzgün sonlandır
     }
   }
 );
