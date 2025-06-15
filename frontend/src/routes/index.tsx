@@ -10,7 +10,7 @@ import {
 } from "react-router-dom"; // useNavigate ve Link eklendi
 import useAuthStore from "../store/authStore";
 import LoginPage from "../pages/Auth/LoginPage";
-import ChatLayout from "../components/layout/ChatLayout";
+import ChatPage from "../pages/ChatPage";
 
 // Geçici Dashboard mesajı için basit bir bileşen
 const TempDashboard: React.FC = () => {
@@ -82,7 +82,7 @@ export const AppRoutes: React.FC = () => {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <ChatLayout />
+            <ChatPage />
           </ProtectedRoute>
         }
       />

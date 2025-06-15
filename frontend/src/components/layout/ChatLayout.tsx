@@ -1,7 +1,7 @@
 // src/components/ChatLayout.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "../ui/SideBar";
-import ChatWindow from "../ui/ChatWindown";
+import ChatWindow from "../ui/ChatWindow";
 import { Chat } from "../../types/chat.types";
 import {
   getAllChats,
@@ -87,7 +87,7 @@ const ChatLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-800 text-white font-sans">
+    <div className="flex h-screen bg-gray-800 text-white font-sans overflow-hidden">
       <Sidebar
         chats={chats}
         activeChat={activeChat}
@@ -95,7 +95,9 @@ const ChatLayout: React.FC = () => {
         onNewChat={handleNewChat}
         onDeleteChat={handleDeleteChat}
       />
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1 flex flex-col min-w-0">
+        {" "}
+        {/* min-w-0 flexbox taşmalarını önler */}
         <ChatWindow
           key={activeChat?.id || "new"}
           activeChat={activeChat}
