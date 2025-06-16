@@ -11,6 +11,7 @@ import {
 import useAuthStore from "../store/authStore";
 import LoginPage from "../pages/Auth/LoginPage";
 import ChatPage from "../pages/ChatPage";
+import RegisterPage from "../pages/Auth/RegisterPage";
 
 // Geçici Dashboard mesajı için basit bir bileşen
 const TempDashboard: React.FC = () => {
@@ -78,6 +79,15 @@ export const AppRoutes: React.FC = () => {
           </PublicOnlyRoute>
         }
       />
+      <Route
+        path="/signup"
+        element={
+          <PublicOnlyRoute>
+            <RegisterPage />
+          </PublicOnlyRoute>
+        }
+      />
+
       <Route
         path="/dashboard"
         element={
