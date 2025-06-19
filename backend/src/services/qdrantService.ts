@@ -1,13 +1,11 @@
-// src/services/qdrantService.ts
+// src/services/qdrantService.ts (TAM VE EKSİKSİZ HALİ)
 
-import { QdrantClient } from "@qdrant/js-client-rest";
+import { QdrantClient, type Schemas } from "@qdrant/js-client-rest";
 
-// Qdrant ayarlarını merkezi bir yerden yönetmek için sabitler oluşturalım.
 const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333";
 const QDRANT_COLLECTION_NAME = "chat_history_collection";
-const EMBEDDING_VECTOR_SIZE = 384; // Kullandığımız all-MiniLM-L6-v2 modelinin vektör boyutu
+const EMBEDDING_VECTOR_SIZE = 384;
 
-// Yine Singleton Prensibi ile Qdrant istemcisinin tek bir örneğini oluşturup yöneteceğiz.
 class QdrantService {
   private static instance: QdrantService | null = null;
   public client: QdrantClient;
@@ -16,14 +14,14 @@ class QdrantService {
     this.client = new QdrantClient({ url: QDRANT_URL });
   }
 
-  // Veritabanı bağlantısını ve collection'ın varlığını kontrol eden başlangıç fonksiyonu
+  // initialize fonksiyonunun tam hali
   private async initialize() {
     try {
       console.log(
         "Qdrant servisi başlatılıyor ve collection kontrol ediliyor..."
       );
-      const collections = await this.client.getCollections();
-      const collectionExists = collections.collections.some(
+      const result = await this.client.getCollections();
+      const collectionExists = result.collections.some(
         (collection) => collection.name === QDRANT_COLLECTION_NAME
       );
 
@@ -33,8 +31,8 @@ class QdrantService {
         );
         await this.client.createCollection(QDRANT_COLLECTION_NAME, {
           vectors: {
-            size: EMBEDDING_VECTOR_SIZE, // Embedding modelimizin vektör boyutuyla eşleşmeli
-            distance: "Cosine", // Normalize edilmiş vektörler için en iyi ve en verimli benzerlik ölçütü
+            size: EMBEDDING_VECTOR_SIZE,
+            distance: "Cosine",
           },
         });
         console.log("Collection başarıyla oluşturuldu.");
@@ -47,7 +45,7 @@ class QdrantService {
     }
   }
 
-  // Servisin tek örneğini (instance) almak için
+  // getInstance fonksiyonunun tam hali
   public static async getInstance(): Promise<QdrantService> {
     if (QdrantService.instance === null) {
       QdrantService.instance = new QdrantService();
@@ -56,34 +54,29 @@ class QdrantService {
     return QdrantService.instance;
   }
 
-  /**
-   * Bir vektör noktasını Qdrant'a ekler veya günceller.
-   * @param id - Noktanın benzersiz ID'si (örn: MongoDB'deki mesajın ID'si olabilir)
-   * @param vector - Metnin sayısal vektör temsili
-   * @param payload - Vektörle birlikte saklanacak ek veriler (örn: orijinal metin)
-   */
+  // upsertPoint fonksiyonunun tam hali
   public async upsertPoint(
     id: string,
     vector: number[],
     payload: Record<string, any>
   ) {
     return this.client.upsert(QDRANT_COLLECTION_NAME, {
-      wait: true, // İşlemin tamamlanmasını bekle
+      wait: true,
       points: [{ id, vector, payload }],
     });
   }
 
-  /**
-   * Verilen bir vektöre en çok benzeyen noktaları arar.
-   * @param vector - Arama yapılacak sorgu vektörü
-   * @param limit - Döndürülecek maksimum sonuç sayısı
-   * @returns Benzer noktaların listesi
-   */
-  public async search(vector: number[], limit: number = 100) {
+  // search fonksiyonunun tam hali
+  public async search(
+    vector: number[],
+    limit: number = 3,
+    filter?: Schemas["Filter"]
+  ) {
     return this.client.search(QDRANT_COLLECTION_NAME, {
       vector,
       limit,
-      with_payload: true, // Arama sonuçlarında payload'daki verileri de getir
+      filter,
+      with_payload: true,
     });
   }
 }

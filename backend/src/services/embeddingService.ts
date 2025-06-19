@@ -50,6 +50,7 @@ class EmbeddingService {
     });
 
     // Modelin çıktısını standart bir sayı dizisine çevirip döndürüyoruz.
+    console.log("output data:", output.data);
     return Array.from(output.data);
   }
 }
