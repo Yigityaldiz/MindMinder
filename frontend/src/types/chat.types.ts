@@ -3,16 +3,15 @@
 // Backend'deki IConversation arayüzüne karşılık gelir.
 // Bir sohbet içindeki tek bir soru-cevap döngüsünü temsil eder.
 export interface Message {
+  _id: string;
   question: string;
   answer: string;
   timestamp: Date;
 }
 
-// Backend'deki IChatSession arayüzüne karşılık gelir.
-// Sidebar'da ve aktif sohbet başlığında kullanılır.
 export interface Chat {
-  id: string; // veya _id
-  title: string; // veya topic
+  _id: string;
+  title: string;
   updatedAt: Date;
-  conversation?: Message[]; // Sohbet detayları yüklendiğinde bu alan dolu olacak
+  conversation?: Message[];
 }

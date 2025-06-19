@@ -21,60 +21,39 @@ export interface SendMessageResponse {
  */
 export const getAllChats = async (): Promise<Chat[]> => {
   try {
-    const response = await apiClient.get<{ data: Chat[] }>("/chatSession");
-    return response.data.data; // Veri, 'data' anahtarı altında geliyor.
+    // DÜZELTME: Backend /api/chatSession'dan { data: [...] } şeklinde dönüyor.
+    const response = await apiClient.get<{ data: any[] }>("/chatSession");
+    return response.data.data;
   } catch (error) {
     console.error("Error fetching all chats:", error);
     throw error;
   }
 };
 
-/**
- * DEĞİŞİKLİK 1: Endpoint /chatSession/:id olarak güncellendi.
- * DEĞİŞİKLİK 2: Backend'den gelen yanıt { data: {...} } şeklinde olduğu için response.data.data kullandık.
- */
-export const getChatById = async (chatId: string): Promise<Chat> => {
+export const getChatById = async (chatId: string): Promise<any> => {
   try {
-    const response = await apiClient.get<{ data: Chat }>(
+    // DÜZELTME: Backend /api/chatSession/:id'den { data: {...} } şeklinde dönüyor.
+    const response = await apiClient.get<{ data: any }>(
       `/chatSession/${chatId}`
     );
-    return response.data.data; // Veri, 'data' anahtarı altında geliyor.
+    return response.data.data;
   } catch (error) {
     console.error(`Error fetching chat with ID ${chatId}:`, error);
     throw error;
   }
 };
 
-/**
- * DEĞİŞİKLİK: Endpoint /chatSession/:id olarak güncellendi.
- */
 export const deleteChat = async (
   chatId: string
 ): Promise<{ message: string }> => {
   try {
+    // DÜZELTME: Endpoint'in /chatSession olduğundan emin olalım.
     const response = await apiClient.delete<{ message: string }>(
       `/chatSession/${chatId}`
     );
     return response.data;
   } catch (error) {
     console.error(`Error deleting chat with ID ${chatId}:`, error);
-    throw error;
-  }
-};
-
-// --- ŞİMDİLİK DOKUNMUYORUZ ---
-// Bu fonksiyonu bir sonraki adımda streaming kullanacak şekilde güncelleyeceğiz.
-export const sendMessage = async (
-  payload: NewMessagePayload
-): Promise<SendMessageResponse> => {
-  try {
-    const response = await apiClient.post<SendMessageResponse>(
-      "/chat",
-      payload
-    );
-    return response.data;
-  } catch (error) {
-    console.error("Error sending message:", error);
     throw error;
   }
 };

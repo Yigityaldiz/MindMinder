@@ -50,7 +50,7 @@ export const requestPasswordReset = async (
   try {
     // Endpoint'i projenizin başlangıcındaki tanıma göre güncelledik
     const response = await apiClient.post<{ message: string }>(
-      "/auth/request-password-reset",
+      "/auth/requestPassword",
       { email }
     );
     return response.data;
@@ -69,7 +69,7 @@ export const resetPassword = async (
     // Endpoint'i güncelledik, token URL'ye eklendi.
     // Payload sadece { newPassword, confirmPassword? } içerecek.
     const response = await apiClient.post<{ message: string }>(
-      `/auth/reset-password/${token}`, // Token'ı URL'ye ekledik
+      `/auth/resetpassword/${token}`, // Token'ı URL'ye ekledik
       payload // { newPassword, confirmPassword? }
     );
     return response.data;

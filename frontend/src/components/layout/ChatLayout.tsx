@@ -1,5 +1,7 @@
-// src/components/ChatLayout.tsx
+// src/components/layout/ChatLayout.tsx (NİHAİ VE EN KARARLI VERSİYON)
+
 import React, { useState, useEffect, useCallback } from "react";
+import { toast } from "react-toastify";
 import Sidebar from "../ui/SideBar";
 import ChatWindow from "../ui/ChatWindow";
 import { Chat } from "../../types/chat.types";
@@ -9,25 +11,33 @@ import {
   deleteChat,
 } from "../../services/chatService";
 
+// YENİ: Backend verisini frontend tipimize çeviren tek bir yardımcı fonksiyon
+const formatChatFromBackend = (backendChat: any): Chat => {
+  return {
+    _id: backendChat._id,
+    title: backendChat.topic || "Başlıksız Sohbet",
+    updatedAt: backendChat.updatedAt,
+    conversation: backendChat.conversation || [],
+  };
+};
+
 const ChatLayout: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null); // Silme işlemi için ayrı bir state
+  const [isLoading, setIsLoading] = useState(true);
 
+  // DÜZELTME: fetchChats artık bu yardımcı fonksiyonu kullanıyor.
   const fetchChats = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getAllChats(); // <-- SERVİS KULLANILIYOR
-      const formattedChats = data.map((chat: any) => ({
-        ...chat,
-        id: chat._id || chat.id, // Backend'den _id veya id gelebilir
-        title: chat.topic || "Başlıksız Sohbet",
-      }));
+      const data = await getAllChats();
+      const formattedChats = data.map(formatChatFromBackend);
       setChats(formattedChats);
+      return formattedChats; // DÜZELTME: Güncel listeyi geri döndür.
     } catch (error) {
       console.error("Failed to fetch chats:", error);
-      // Burada kullanıcıya bir hata mesajı gösterilebilir (Toast notification vb.)
+      toast.error("Sohbet listesi yüklenemedi.");
+      return []; // Hata durumunda boş dizi döndür.
     } finally {
       setIsLoading(false);
     }
@@ -37,22 +47,18 @@ const ChatLayout: React.FC = () => {
     fetchChats();
   }, [fetchChats]);
 
+  // DÜZELTME: handleSelectChat de artık bu yardımcı fonksiyonu kullanıyor.
   const handleSelectChat = async (chat: Chat) => {
-    // Zaten aktif olan sohbete tekrar tıklanırsa bir şey yapma
-    if (activeChat?.id === chat.id) return;
+    if (activeChat?._id === chat._id && !isLoading) return;
 
     setIsLoading(true);
-    setActiveChat(null); // Önceki sohbeti temizle, daha akıcı bir geçiş için
     try {
-      const fullChatData = await getChatById(chat.id); // <-- SERVİS KULLANILIYOR
-      console.log("Fetched chat details:", fullChatData);
-      setActiveChat({
-        ...fullChatData,
-        id: fullChatData.id,
-        title: fullChatData.title,
-      });
+      const responseData = await getChatById(chat._id);
+      const formattedChat = formatChatFromBackend(responseData);
+      setActiveChat(formattedChat);
     } catch (error) {
       console.error("Failed to fetch chat details:", error);
+      toast.error("Sohbet detayları yüklenemedi.");
     } finally {
       setIsLoading(false);
     }
@@ -63,25 +69,22 @@ const ChatLayout: React.FC = () => {
   };
 
   const handleDeleteChat = async (chatId: string) => {
-    setIsDeleting(chatId);
-    try {
-      await deleteChat(chatId); // <-- SERVİS KULLANILIYOR
-      if (activeChat?.id === chatId) {
-        setActiveChat(null);
-      }
-      // Silme sonrası listeyi anında güncelle
-      setChats((prevChats) => prevChats.filter((c) => c.id !== chatId));
-    } catch (error) {
-      console.error("Failed to delete chat:", error);
-    } finally {
-      setIsDeleting(null);
-    }
+    await deleteChat(chatId);
+    toast.success("Sohbet silindi.");
+    if (activeChat?._id === chatId) setActiveChat(null);
+    fetchChats();
   };
 
-  const handleMessageSent = () => {
-    fetchChats();
-    if (activeChat) {
-      // Aktif sohbetin mesajlarını yenilemek için tekrar çağır
+  // NİHAİ DÜZELTME: handleMessageSent fonksiyonunun en basit ve en kararlı hali.
+  const handleMessageSent = async () => {
+    const wasNewChat = !activeChat;
+    const updatedChats = await fetchChats(); // 1. Kenar çubuğu listesini yenile ve güncel listeyi al.
+
+    if (wasNewChat && updatedChats.length > 0) {
+      // 2. Eğer bu yeni bir sohbet idiyse, listenin en başındaki yeni sohbeti seç.
+      handleSelectChat(updatedChats[0]);
+    } else if (activeChat) {
+      // 3. Eğer mevcut bir sohbetse, onun güncel halini tekrar seçerek ana pencereyi yenile.
       handleSelectChat(activeChat);
     }
   };
@@ -96,10 +99,8 @@ const ChatLayout: React.FC = () => {
         onDeleteChat={handleDeleteChat}
       />
       <main className="flex-1 flex flex-col min-w-0">
-        {" "}
-        {/* min-w-0 flexbox taşmalarını önler */}
         <ChatWindow
-          key={activeChat?.id || "new"}
+          key={activeChat?._id || "new"}
           activeChat={activeChat}
           onMessageSent={handleMessageSent}
         />

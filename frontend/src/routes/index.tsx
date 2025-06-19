@@ -12,6 +12,8 @@ import useAuthStore from "../store/authStore";
 import LoginPage from "../pages/Auth/LoginPage";
 import ChatPage from "../pages/ChatPage";
 import RegisterPage from "../pages/Auth/RegisterPage";
+import ForgotPasswordPage from "../pages/Auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/Auth/ResetPasswordPage";
 
 // Geçici Dashboard mesajı için basit bir bileşen
 const TempDashboard: React.FC = () => {
@@ -84,6 +86,22 @@ export const AppRoutes: React.FC = () => {
         element={
           <PublicOnlyRoute>
             <RegisterPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicOnlyRoute>
+            <ForgotPasswordPage />
+          </PublicOnlyRoute>
+        }
+      />
+      <Route
+        path="reset-password/:token"
+        element={
+          <PublicOnlyRoute>
+            <ResetPasswordPage />
           </PublicOnlyRoute>
         }
       />
